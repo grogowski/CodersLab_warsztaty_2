@@ -2,10 +2,10 @@ package pl.coderslab;
 
 import org.mindrot.jbcrypt.BCrypt;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Connection;
 import java.util.ArrayList;
 
 public class User {
@@ -30,8 +30,46 @@ public class User {
         this.email = email;
     }
 
+    public int getId() {
+        return id;
+    }
+
     private void setPassword(String password) {
         this.password = BCrypt.hashpw(password, BCrypt.gensalt());
+    }
+
+    static public User[] loadAllUsers(Connection connection) throws SQLException {
+        ArrayList<User> users = new ArrayList<User>();
+        String sql = "SELECT * FROM users";
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        ResultSet resultSet = preparedStatement.executeQuery();
+        while (resultSet.next()) {
+            users.add(getUserFromResultSet(resultSet, connection));
+        }
+        User[] uArray = new User[users.size()];
+        uArray = users.toArray(uArray);
+        return uArray;
+    }
+
+    static public User loadUserById(Connection connection, int id) throws SQLException {
+        String sql = "SELECT * FROM users where id=?";
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        preparedStatement.setInt(1, id);
+        ResultSet resultSet = preparedStatement.executeQuery();
+        if (resultSet.next()) {
+            return getUserFromResultSet(resultSet, connection);
+        }
+        return null;
+    }
+
+    public void delete(Connection connection) throws SQLException {
+        if (this.id != 0) {
+            String sql = "DELETE FROM users WHERE id=?";
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setInt(1, this.id);
+            preparedStatement.executeUpdate();
+            this.id = 0;
+        }
     }
 
     public void saveToDB(Connection connection) throws SQLException {
@@ -60,50 +98,14 @@ public class User {
         }
     }
 
-    public void delete(Connection connection) throws SQLException {
-        if (this.id != 0) {
-            String sql = "DELETE FROM users WHERE id=?";
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setInt(1, this.id);
-            preparedStatement.executeUpdate();
-            this.id = 0;
-        }
-    }
-
-    static public User loadUserById(Connection connection, int id) throws SQLException {
-        String sql = "SELECT * FROM users where id=?";
-        PreparedStatement preparedStatement = connection.prepareStatement(sql);
-        preparedStatement.setInt(1, id);
-        ResultSet resultSet = preparedStatement.executeQuery();
-        if (resultSet.next()) {
-            User loadedUser = new User();
-            loadedUser.id = resultSet.getInt("id");
-            loadedUser.username = resultSet.getString("username");
-            loadedUser.password = resultSet.getString("password");
-            loadedUser.email = resultSet.getString("email");
-            loadedUser.userGroup = UserGroup.loadUserGroupById(connection, resultSet.getInt("user_group_id"));
-            return loadedUser;
-        }
-        return null;
-    }
-
-    static public User[] loadAllUsers(Connection connection) throws SQLException {
-        ArrayList<User> users = new ArrayList<User>();
-        String sql = "SELECT * FROM users";
-        PreparedStatement preparedStatement = connection.prepareStatement(sql);
-        ResultSet resultSet = preparedStatement.executeQuery();
-        while (resultSet.next()) {
-            User loadedUser = new User();
-            loadedUser.id = resultSet.getInt("id");
-            loadedUser.username = resultSet.getString("username");
-            loadedUser.password = resultSet.getString("password");
-            loadedUser.email = resultSet.getString("email");
-            loadedUser.userGroup = UserGroup.loadUserGroupById(connection, resultSet.getInt("user_group_id"));
-            users.add(loadedUser);
-        }
-        User[] uArray = new User[users.size()];
-        uArray = users.toArray(uArray);
-        return uArray;
+    private static User getUserFromResultSet(ResultSet resultSet, Connection connection) throws SQLException {
+        User loadedUser = new User();
+        loadedUser.id = resultSet.getInt("id");
+        loadedUser.username = resultSet.getString("username");
+        loadedUser.password = resultSet.getString("password");
+        loadedUser.email = resultSet.getString("email");
+        loadedUser.userGroup = UserGroup.loadUserGroupById(connection, resultSet.getInt("user_group_id"));
+        return loadedUser;
     }
 
     @Override
