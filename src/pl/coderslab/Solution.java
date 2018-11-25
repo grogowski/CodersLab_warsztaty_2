@@ -11,6 +11,7 @@ public class Solution {
     private int id;
     private LocalDateTime created;
     private LocalDateTime updated;
+    private String description;
     private Exercise exercise;
     private User user;
 
@@ -18,9 +19,10 @@ public class Solution {
 
     }
 
-    public Solution(LocalDateTime created, LocalDateTime updated, Exercise exercise, User user) {
+    public Solution(LocalDateTime created, LocalDateTime updated, String description, Exercise exercise, User user) {
         this.created = created;
         this.updated = updated;
+        this.description = description;
         this.exercise = exercise;
         this.user = user;
     }
@@ -61,26 +63,28 @@ public class Solution {
 
     public void saveToDB(Connection connection) throws SQLException {
         if (this.id == 0) {
-            String sql = "INSERT INTO solution(created, updated, exercise_id, users_id) VALUES (?, ?, ?, ?)";
+            String sql = "INSERT INTO solution(created, updated, description, exercise_id, users_id) VALUES (?, ?, ?, ?, ?)";
             String[] generatedColumns = {"ID"};
             PreparedStatement preparedStatement = connection.prepareStatement(sql, generatedColumns);
             preparedStatement.setString(1, String.join(" ", this.created.toString().split("T")));
             preparedStatement.setString(2, String.join(" ", this.updated.toString().split("T")));
-            preparedStatement.setInt(3, this.exercise.getId());
-            preparedStatement.setInt(4, this.user.getId());
+            preparedStatement.setString(3, this.description);
+            preparedStatement.setInt(4, this.exercise.getId());
+            preparedStatement.setInt(5, this.user.getId());
             preparedStatement.executeUpdate();
             ResultSet rs = preparedStatement.getGeneratedKeys();
             if (rs.next()) {
                 this.id = rs.getInt(1);
             }
         } else {
-            String sql = "UPDATE solution SET created=?, updated=?, exercise_id=?, users_id=? where id = ?";
+            String sql = "UPDATE solution SET created=?, updated=?, description=?, exercise_id=?, users_id=? where id = ?";
             PreparedStatement preparedStatement = connection.prepareStatement(sql);
             preparedStatement.setString(1, String.join(" ", this.created.toString().split("T")));
             preparedStatement.setString(2, String.join(" ", this.updated.toString().split("T")));
-            preparedStatement.setInt(3, this.exercise.getId());
-            preparedStatement.setInt(4, this.user.getId());
-            preparedStatement.setInt(5, this.id);
+            preparedStatement.setString(3, this.description);
+            preparedStatement.setInt(4, this.exercise.getId());
+            preparedStatement.setInt(5, this.user.getId());
+            preparedStatement.setInt(6, this.id);
             preparedStatement.executeUpdate();
         }
     }
@@ -90,6 +94,7 @@ public class Solution {
         loadedSolution.id = resultSet.getInt("id");
         loadedSolution.created = LocalDateTime.parse(String.join("T", resultSet.getString("created").split(" ")));
         loadedSolution.updated = LocalDateTime.parse(String.join("T", resultSet.getString("updated").split(" ")));
+        loadedSolution.description = resultSet.getString("description");
         loadedSolution.exercise = Exercise.loadExerciseById(connection, resultSet.getInt("exercise_id"));
         loadedSolution.user = User.loadUserById(connection, resultSet.getInt("users_id"));
         return loadedSolution;
@@ -105,6 +110,7 @@ public class Solution {
                 "id=" + id +
                 ", created=" + created +
                 ", updated=" + updated +
+                ", description='" + description + '\'' +
                 ", exercise=" + exercise.getId() +
                 ", user=" + user.getId() +
                 '}';
