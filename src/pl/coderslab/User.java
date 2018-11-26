@@ -51,6 +51,20 @@ public class User {
         return uArray;
     }
 
+    public static User[] loadAllUsersByGroupId(Connection connection, int groupId) throws SQLException {
+        ArrayList<User> users = new ArrayList<User>();
+        String sql = "SELECT * FROM users where user_group_id=?";
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        preparedStatement.setInt(1, groupId);
+        ResultSet resultSet = preparedStatement.executeQuery();
+        while (resultSet.next()) {
+            users.add(getUserFromResultSet(resultSet, connection));
+        }
+        User[] uArray = new User[users.size()];
+        uArray = users.toArray(uArray);
+        return uArray;
+    }
+
     static public User loadUserById(Connection connection, int id) throws SQLException {
         String sql = "SELECT * FROM users where id=?";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
@@ -110,11 +124,9 @@ public class User {
 
     @Override
     public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", username='" + username + '\'' +
-                ", password='" + password + '\'' +
-                ", email='" + email + '\'' +
-                '}';
+        return "User " + id +
+                ": username = " + username +
+                ", password = " + password +
+                ", email = " + email;
     }
 }

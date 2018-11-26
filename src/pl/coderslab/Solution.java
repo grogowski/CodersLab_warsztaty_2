@@ -40,7 +40,35 @@ public class Solution {
         return sArray;
     }
 
-    static public Solution loadSolutionById(Connection connection, int id) throws SQLException {
+    public static Solution[] loadAllSolutionsByUserId(Connection connection, int userId) throws SQLException {
+        ArrayList<Solution> solutions = new ArrayList<>();
+        String sql = "SELECT * FROM solution where users_id=?";
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        preparedStatement.setInt(1, userId);
+        ResultSet resultSet = preparedStatement.executeQuery();
+        while (resultSet.next()) {
+            solutions.add(getSolutionFromResultSet(resultSet, connection));
+        }
+        Solution[] sArray = new Solution[solutions.size()];
+        sArray = solutions.toArray(sArray);
+        return sArray;
+    }
+
+    public static Solution[] loadAllSolutionsByExerciseId(Connection connection, int exerciseId) throws SQLException {
+        ArrayList<Solution> solutions = new ArrayList<>();
+        String sql = "SELECT * FROM solution where exercise_id=? order by created desc";
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        preparedStatement.setInt(1, exerciseId);
+        ResultSet resultSet = preparedStatement.executeQuery();
+        while (resultSet.next()) {
+            solutions.add(getSolutionFromResultSet(resultSet, connection));
+        }
+        Solution[] sArray = new Solution[solutions.size()];
+        sArray = solutions.toArray(sArray);
+        return sArray;
+    }
+
+    public static Solution loadSolutionById(Connection connection, int id) throws SQLException {
         String sql = "SELECT * FROM solution where id=?";
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         preparedStatement.setInt(1, id);
